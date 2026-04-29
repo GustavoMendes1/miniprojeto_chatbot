@@ -1,4 +1,4 @@
-# 📄 RAG API — Chat com contexto de PDF
+# 📄 ChatBot de perguntas e respostas
 
 > Assistente conversacional que responde perguntas com base no conteúdo de documentos PDF, utilizando a técnica de RAG (Retrieval-Augmented Generation).
 
