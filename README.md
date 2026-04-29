@@ -198,61 +198,100 @@ Acesse `http://localhost:8000/docs` para testar todas as rotas diretamente no na
 
 ## 🧪 Testes automatizados
 
+Os testes cobrem todas as camadas da aplicação — serviços, lógica de negócio e rotas HTTP — usando `MagicMock` para simular chamadas à API da OpenAI sem gerar custos reais.
+
 ### Instalação das dependências de teste
 
 ```bash
 pip install pytest httpx
 ```
 
-### Rodando os testes
+### Rodando todos os testes
 
 ```bash
-pytest tests/ -v
+venv/bin/pytest tests/ -v
+```
+
+### Rodando um módulo específico
+
+```bash
+# Apenas os testes do pdf_service
+venv/bin/pytest tests/tests.py::TestPdfService -v
+
+# Apenas os testes do vector_service
+venv/bin/pytest tests/tests.py::TestVectorService -v
+
+# Apenas os testes do rag_service
+venv/bin/pytest tests/tests.py::TestRagService -v
+
+# Apenas os testes das rotas
+venv/bin/pytest tests/tests.py::TestRotaUpload -v
+venv/bin/pytest tests/tests.py::TestRotaChat -v
+```
+
+### Rodando um teste específico
+
+```bash
+venv/bin/pytest tests/tests.py::TestPdfService::test_extrair_texto_sucesso -v
 ```
 
 ### O que é testado
 
-| Módulo | Testes |
-|---|---|
-| `pdf_service` | Extração de texto, página vazia, divisão em chunks |
-| `vector_service` | Indexar novo, indexar existente, buscar chunks, erro sem índice |
-| `rag_service` | Geração de resposta simples, geração com histórico |
-| `routes/upload` | Arquivo inválido, upload com sucesso |
-| `routes/chat` | Resposta com sucesso, pergunta vazia |
-
-> Todos os testes utilizam `MagicMock` para simular chamadas à API da OpenAI, sem gerar custos reais.
+| Classe | Teste | O que valida |
+|---|---|---|
+| `TestPdfService` | `test_extrair_texto_sucesso` | Extrai texto corretamente de uma página |
+| `TestPdfService` | `test_extrair_texto_pagina_vazia` | Retorna string vazia quando página não tem texto |
+| `TestPdfService` | `test_dividir_em_chunks_retorna_lista` | Chunking retorna uma lista não vazia |
+| `TestPdfService` | `test_dividir_em_chunks_tamanho` | Chunks respeitam o tamanho máximo configurado |
+| `TestVectorService` | `test_indexar_chunks_cria_novo` | Cria novo índice FAISS quando não existe |
+| `TestVectorService` | `test_indexar_chunks_adiciona_existente` | Adiciona ao índice existente em vez de recriar |
+| `TestVectorService` | `test_buscar_chunks_retorna_resultados` | Retorna chunks relevantes para uma pergunta |
+| `TestVectorService` | `test_buscar_chunks_sem_index_levanta_erro` | Lança `FileNotFoundError` sem índice |
+| `TestRagService` | `test_gerar_resposta_sucesso` | Gera resposta correta com base nos chunks |
+| `TestRagService` | `test_gerar_resposta_com_historico` | Inclui histórico na chamada ao modelo |
+| `TestRotaUpload` | `test_upload_arquivo_invalido` | Rejeita arquivos que não são PDF com status 400 |
+| `TestRotaUpload` | `test_upload_pdf_sucesso` | Processa e indexa PDF com sucesso |
+| `TestRotaChat` | `test_chat_sucesso` | Retorna resposta correta via rota HTTP |
+| `TestRotaChat` | `test_chat_pergunta_vazia` | Rejeita pergunta vazia com status 400 |
 
 ---
 
 ## 🗂 Estrutura do projeto
 
 ```
-rag-api/
+miniprojeto_chatbot/
 ├── app/
+│   ├── __init__.py
 │   ├── main.py                  # Entrada da aplicação
 │   ├── api/
+│   │   ├── __init__.py
 │   │   └── routes/
+│   │       ├── __init__.py
 │   │       ├── upload.py        # POST /api/upload
 │   │       └── chat.py          # POST /api/chat
 │   ├── core/
+│   │   ├── __init__.py
 │   │   └── config.py            # Variáveis de ambiente
 │   ├── services/
+│   │   ├── __init__.py
 │   │   ├── pdf_service.py       # Extração e chunking do PDF
 │   │   ├── vector_service.py    # Indexação e busca no FAISS
 │   │   └── rag_service.py       # Orquestração RAG + chamada ao GPT
 │   └── models/
+│       ├── __init__.py
 │       └── chat.py              # Schemas Pydantic
 │
 ├── frontend/
 │   └── app.py                   # Interface Gradio
 │
 ├── tests/
-│   └── test_services.py         # Testes automatizados
+│   └── tests.py                 # Testes automatizados
 │
 ├── storage/
 │   ├── pdfs/                    # PDFs enviados
 │   └── vectordb/                # Índice FAISS persistido
 │
+├── conftest.py                  # Configuração do pytest
 ├── .env                         # Variáveis locais (não versionado)
 ├── .env.example                 # Modelo do .env
 ├── .gitignore
