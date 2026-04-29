@@ -1,5 +1,5 @@
 from pathlib import Path
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import pdfplumber
 
 def extrair_texto(file_path: str) -> str:
